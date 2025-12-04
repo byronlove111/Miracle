@@ -8,9 +8,10 @@ type Message = {
 };
 
 async function main() {
-  const anthropic = new Anthropic();
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
   const messages: Message[] = [];
-  anthropic.apiKey = process.env.ANTHROPIC_API_KEY || null;
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -33,10 +34,14 @@ async function main() {
     });
 
     const message = await anthropic.messages.create({
-      max_tokens: 1000,
+      max_tokens: 1024,
       messages: messages,
       model: "claude-haiku-4-5-20251001",
     });
+    if (!message) {
+      rl.close();
+      throw new Error("API call failed");
+    }
 
     if (message.content[0].type === "text") {
       messages.push({
