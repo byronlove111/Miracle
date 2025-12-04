@@ -22,7 +22,7 @@ async function main() {
   while (true) {
     let lastMessage: string;
 
-    lastMessage = await rl.question("");
+    lastMessage = await rl.question("\u001b[94mYou\u001b[0m: ");
     if (lastMessage === "debug") {
       console.log(messages);
       continue;
@@ -43,12 +43,12 @@ async function main() {
       throw new Error("API call failed");
     }
 
-    if (message.content[0].type === "text") {
+    if (message?.content[0]?.type === "text") {
       messages.push({
         role: "assistant",
         content: message.content[0].text,
       });
-      console.log("\n\nAI : ", message.content[0].text, "\n\n");
+      console.log("\u001b[93mClaude\u001b[0m:", message.content[0].text);
     }
   }
   rl.close();
