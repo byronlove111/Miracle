@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { Tool } from "@anthropic-ai/sdk/resources";
-import { list_files, read_file } from "./tools";
+import { edit_file, list_files, read_file } from "./tools";
 
 const prompt = (query: string) => {
   return new Promise<string>((resolve) => {
@@ -37,7 +37,7 @@ async function main() {
   const anthropic = new Anthropic({
     apiKey: Bun.env.ANTHROPIC_API_KEY,
   });
-  const allTools: ToolDefinition[] = [read_file, list_files];
+  const allTools: ToolDefinition[] = [read_file, list_files, edit_file];
   const messages: Message[] = [];
 
   console.log("Chat with AI. Type 'exit' or CTRL + C to end the conversation.");
@@ -91,7 +91,13 @@ async function main() {
             block.input,
             allTools
           );
-          console.log("\u001b[92mTool\u001b[0m:", block.name, "->", toolResult);
+          console.log(
+            "\u001b[92mTool\u001b[0m:",
+            block.name,
+            block.input,
+            "->",
+            toolResult
+          );
           messages.push({
             role: "user",
             content: toolResult,

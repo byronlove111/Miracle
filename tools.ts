@@ -19,6 +19,27 @@ export function list(input: { path: string }) {
   return files;
 }
 
+export async function edit_file_from_path(input: {
+  path: string;
+  old_str: string;
+  new_str: string;
+}) {
+  const file = Bun.file(input.path);
+  const exists = await file.exists();
+  if (!exists) {
+    Bun.write(input.path, input.new_str);
+    return;
+  } else {
+    const old_content: string = await file.text();
+    const new_content: string = old_content.replace(
+      input.old_str,
+      input.new_str
+    );
+    Bun.write(input.path, new_content);
+    return;
+  }
+}
+
 export const read_file = {
   name: "read_file",
   description:
@@ -52,4 +73,32 @@ export const list_files = {
     required: ["path"],
   },
   execute: list,
+};
+
+export const edit_file = {
+  name: "edit_file",
+  description:
+    "Make edits to a text file. Replaces 'old_str' with 'new_str' in the given file. 'old_str' and 'new_str' MUST be different from each other. If the file specified with path doesn't exist, it will be created, allowing you to use this function to create new files as well.",
+  input_schema: {
+    type: "object",
+    properties: {
+      path: {
+        type: "string",
+        description:
+          "The path to the file to edit, e.g., './src/main.ts'. If the path doesn't exist, a new file will be created at that location.",
+      },
+      old_str: {
+        type: "string",
+        description:
+          "The exact text string to find and replace in the file. This parameter is optional - you can provide an empty string or null when creating a new file from scratch. When editing an existing file, this should match the exact text you want to replace, including whitespace and formatting.",
+      },
+      new_str: {
+        type: "string",
+        description:
+          "The text string that will replace 'old_str' in the file. When creating a new file (with empty or null 'old_str'), this becomes the entire content of the new file. When editing, this is the replacement text that will take the place of 'old_str'.",
+      },
+    },
+    required: ["path", "new_str"],
+  },
+  execute: edit_file_from_path,
 };
