@@ -27,8 +27,8 @@ export async function edit_file_from_path(input: {
   const file = Bun.file(input.path);
   const exists = await file.exists();
   if (!exists) {
-    Bun.write(input.path, input.new_str);
-    return;
+    Bun.write(file, input.new_str);
+    return "File created successfully";
   } else {
     const old_content: string = await file.text();
     const new_content: string = old_content.replace(
@@ -36,7 +36,16 @@ export async function edit_file_from_path(input: {
       input.new_str
     );
     Bun.write(input.path, new_content);
-    return;
+    return "File edited successfully";
+  }
+}
+
+export async function delete_file_from_path(input: { path: string }) {
+  try {
+    await Bun.file(input.path).delete();
+    return `File successfully deleted: ${input.path}`;
+  } catch (err) {
+    return `Error: could not delete file at ${input.path} - ${err}`;
   }
 }
 
@@ -78,27 +87,44 @@ export const list_files = {
 export const edit_file = {
   name: "edit_file",
   description:
-    "Make edits to a text file. Replaces 'old_str' with 'new_str' in the given file. 'old_str' and 'new_str' MUST be different from each other. If the file specified with path doesn't exist, it will be created, allowing you to use this function to create new files as well.",
+    "This tool has two modes: 1) CREATE a new file by providing path and new_str with empty old_str, 2) EDIT an existing file by replacing old_str with new_str. The tool will create the file if it doesn't exist, or edit it if it does. Always provide new_str - it contains either the full file content (for creation) or the replacement text (for editing).",
   input_schema: {
     type: "object",
     properties: {
       path: {
         type: "string",
         description:
-          "The path to the file to edit, e.g., './src/main.ts'. If the path doesn't exist, a new file will be created at that location.",
+          "The path to the file to create or edit, e.g., './src/main.ts'. Works for both creating new files and editing existing ones.",
       },
       old_str: {
         type: "string",
         description:
-          "The exact text string to find and replace in the file. This parameter is optional - you can provide an empty string or null when creating a new file from scratch. When editing an existing file, this should match the exact text you want to replace, including whitespace and formatting.",
+          "For CREATING a new file: use an empty string ''. For EDITING an existing file: provide the exact text to find and replace, including all whitespace and formatting. This must match exactly what's in the file.",
       },
       new_str: {
         type: "string",
         description:
-          "The text string that will replace 'old_str' in the file. When creating a new file (with empty or null 'old_str'), this becomes the entire content of the new file. When editing, this is the replacement text that will take the place of 'old_str'.",
+          "REQUIRED. For CREATING a new file: this is the complete content of the new file. For EDITING an existing file: this is the text that will replace old_str. Never leave this undefined or null.",
       },
     },
-    required: ["path", "new_str"],
+    required: ["path", "old_str", "new_str"],
   },
   execute: edit_file_from_path,
+};
+
+export const delete_file = {
+  name: "delete_file",
+  description:
+    "Deletes a file at the specified path. This operation is permanent and cannot be undone. Use with caution as the file will be removed from the filesystem.",
+  input_schema: {
+    type: "object",
+    properties: {
+      path: {
+        type: "string",
+        description: "The path to the file to delete, e.g., './src/main.ts'.",
+      },
+    },
+    required: ["path"],
+  },
+  execute: delete_file_from_path,
 };
